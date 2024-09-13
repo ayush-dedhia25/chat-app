@@ -23,7 +23,7 @@ def create_user(username: str, email: str, password: str):
         return None, "User with this email already exists", 409
 
     if User.query.filter_by(username=username).first():
-        return None, "User already taken, please choose a different username", 409
+        return None, "Username already taken, please choose a different username", 409
 
     hashed_password = generate_password_hash(password)
     new_user = User(

@@ -76,7 +76,6 @@ def signup():
         data = signup_schema.load(request.json)
     except ValidationError as err:
         print(err.messages)
-        # return jsonify({"error": err.messages}), 400
         return send_response(
             data={"error": err.messages},
             status_code=400,
@@ -86,7 +85,6 @@ def signup():
     user, message, status_code = create_user(
         data["username"], data["email"], data["password"]
     )
-    # return jsonify({"message": message}), status_code
     return send_response(
         message=message, status_code=status_code, success=user is not None
     )

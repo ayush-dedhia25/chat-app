@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 from flask import Flask
-from flask_cors import CORS
 
 from .extensions import db, socketio
 
@@ -9,6 +8,9 @@ load_dotenv()
 
 
 def create_app():
+    from flask_cors import CORS
+    from .utils.router import register_routes
+
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dev.db"
     app.config["SECRET_KEY"] = "your_secret_key"
@@ -18,9 +20,6 @@ def create_app():
     db.init_app(app)
     socketio.init_app(app)
 
-    from .routes import chats as chats_blueprint, auth as auth_blueprint
-
-    app.register_blueprint(chats_blueprint)
-    app.register_blueprint(auth_blueprint)
+    register_routes(app)
 
     return app
