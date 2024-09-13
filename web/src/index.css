@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+#sidebar {
+  .nav-item {
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      visibility: hidden;
+      top: 50%;
+      left: -1px;
+      width: 4px;
+      height: 40%;
+      transform: translateY(-50%);
+      background-color: green;
+      border-radius: 2px;
+    }
+
+    &.active::before,
+    &:hover::before {
+      visibility: visible;
+    }
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.no-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #3f3f46;
+  border-radius: 8px;
+}
+
+.chat-room-body {
+  background-image: linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.8),
+      rgba(0, 0, 0, 0.8)
+    ),
+    url(/whatsapp-original-bg-dark.png);
+  background-size: contain;
+}
+
+.chat-bubble {
+  --arrow-size: 10px;
+
+  position: relative;
+  width: fit-content;
+  max-width: 55ch;
+  padding: 6px 10px;
+  background-color: lightyellow;
+  border-radius: 6px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    border: var(--arrow-size) solid;
+    border-color: lightyellow transparent transparent transparent;
+  }
+
+  &.from-me-subsequent-message,
+  &.from-me {
+    @apply bg-emerald-600;
+
+    .message {
+      @apply text-white;
+    }
+
+    &::before {
+      @apply border-t-emerald-600;
+    }
+  }
+
+  &.from-me::before {
+    right: calc(var(--arrow-size) * -1);
+    @apply border-t-emerald-600;
+  }
+
+  &.from-other::before {
+    left: calc(var(--arrow-size) * -1);
+  }
+}
+
+.auth-image {
+  width: 80%;
+  height: 100%;
+  background-color: #487346;
+  background-image: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.8),
+      rgba(255, 255, 255, 0.25)
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg %3E%3Cpolygon fill='%234c8e43' points='100 57.1 64 93.1 71.5 100.6 100 72.1'/%3E%3Cpolygon fill='%236aac5f' points='100 57.1 100 72.1 128.6 100.6 136.1 93.1'/%3E%3Cpolygon fill='%234c8e43' points='100 163.2 100 178.2 170.7 107.5 170.8 92.4'/%3E%3Cpolygon fill='%236aac5f' points='100 163.2 29.2 92.5 29.2 107.5 100 178.2'/%3E%3Cpath fill='%2389CC7C' d='M100 21.8L29.2 92.5l70.7 70.7l70.7-70.7L100 21.8z M100 127.9L64.6 92.5L100 57.1l35.4 35.4L100 127.9z'/%3E%3Cpolygon fill='%23768c3a' points='0 157.1 0 172.1 28.6 200.6 36.1 193.1'/%3E%3Cpolygon fill='%2396ac58' points='70.7 200 70.8 192.4 63.2 200'/%3E%3Cpolygon fill='%23B6CC76' points='27.8 200 63.2 200 70.7 192.5 0 121.8 0 157.2 35.3 192.5'/%3E%3Cpolygon fill='%2396ac58' points='200 157.1 164 193.1 171.5 200.6 200 172.1'/%3E%3Cpolygon fill='%23768c3a' points='136.7 200 129.2 192.5 129.2 200'/%3E%3Cpolygon fill='%23B6CC76' points='172.1 200 164.6 192.5 200 157.1 200 157.2 200 121.8 200 121.8 129.2 192.5 136.7 200'/%3E%3Cpolygon fill='%23768c3a' points='129.2 0 129.2 7.5 200 78.2 200 63.2 136.7 0'/%3E%3Cpolygon fill='%23B6CC76' points='200 27.8 200 27.9 172.1 0 136.7 0 200 63.2 200 63.2'/%3E%3Cpolygon fill='%2396ac58' points='63.2 0 0 63.2 0 78.2 70.7 7.5 70.7 0'/%3E%3Cpolygon fill='%23B6CC76' points='0 63.2 63.2 0 27.8 0 0 27.8'/%3E%3C/g%3E%3C/svg%3E");
+  border-radius: 16px;
+}
