@@ -1,4 +1,5 @@
 from typing import Any
+
 from flask import jsonify
 
 
@@ -24,6 +25,8 @@ def send_response(
             else ("Request was successful" if success else "Request failed")
         ),
     }
+
     if data is not None:
         response["data"] = data
+
     return jsonify(response), status_code

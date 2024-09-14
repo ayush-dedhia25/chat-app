@@ -1,14 +1,14 @@
-from datetime import datetime, timezone, timedelta
-from flask import Blueprint, jsonify, request, current_app
-import jwt
+from datetime import timedelta
+
+from flask import Blueprint, jsonify, request
 from marshmallow import ValidationError
 from werkzeug.security import check_password_hash
 
-from ..utils.user_utility import create_user
-from ..utils.response import send_response
 from ..models import User
 from ..schema import login_schema, signup_schema
-
+from ..utils.jwt_utility import create_access_token, create_refresh_token
+from ..utils.response import send_response
+from ..utils.user_utility import create_user
 
 auth = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -34,20 +34,19 @@ def login():
         return jsonify({"error": err.messages}), 400
 
     user = User.query.filter_by(email=data["email"]).first()
-    print(user)
+
     if user and check_password_hash(user.password, data["password"]):
-        jwt_secret = current_app.config["SECRET_KEY"]
-        token = jwt.encode(
-            {
-                "user_id": user.id,
-                "exp": datetime.now(timezone.utc) + timedelta(hours=1),
-            },
-            jwt_secret,
-            algorithm="HS256",
+        token_payload = {"user_id": user.id}
+
+        token = create_access_token(token_payload, expires_delta=timedelta(seconds=15))
+        refresh_token = create_refresh_token(
+            token_payload, expires_delta=timedelta(days=7)
         )
+
         return send_response(
             data={
                 "token": token,
+                "refreshToken": refresh_token,
                 "user": {
                     "id": user.id,
                     "username": user.username,
@@ -57,6 +56,7 @@ def login():
             },
             message="Login successful",
         )
+
     return send_response(status_code=404, success=False, message="User not found")
 
 

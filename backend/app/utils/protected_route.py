@@ -1,7 +1,17 @@
 from functools import wraps
-from flask import current_app, jsonify, request
-import jwt
 
+import jwt
+from flask import current_app, request
+
+from ..errors.auth_errors import UserNotFound
+from ..errors.database_errors import DatabaseError
+from ..errors.jwt_errors import (
+    AuthTokenDecodeError,
+    AuthTokenExpired,
+    AuthTokenInvalid,
+    AuthTokenInvalidFormat,
+    AuthTokenMissing,
+)
 from ..models import User
 
 
@@ -15,8 +25,7 @@ def access_required(f):
 
     @wraps(f)
     def decorated(*args, **kwargs):
-        """
-        Decorated function to check if the request has a valid JWT access token.
+        """Decorator to check if the request has a valid JWT access token.
 
         The JWT token should be sent in the Authorization header of the request.
         If the token is valid, the user object is passed to the decorated function.
@@ -26,11 +35,11 @@ def access_required(f):
 
         # Check if the token is present
         if not token:
-            return {"message": "Authentication denied, no auth token provided"}, 401
+            raise AuthTokenMissing()
 
         # Check if the token starts with "Bearer "
         if not token.startswith("Bearer "):
-            return {"message": "Invalid token format"}, 401
+            raise AuthTokenInvalidFormat()
 
         # Split the token to get the actual token
         token = token.split(" ")[1]
@@ -39,9 +48,20 @@ def access_required(f):
         try:
             jwt_secret = current_app.config["SECRET_KEY"]
             data = jwt.decode(token, jwt_secret, algorithms=["HS256"])
-            current_user = User.query.filter_by(id=data["user_id"]).first()
-        except:
-            return jsonify({"message": "Token is invalid"}), 401
+        except jwt.ExpiredSignatureError:
+            raise AuthTokenExpired()
+        except jwt.InvalidTokenError:
+            raise AuthTokenInvalid()
+        except Exception as e:
+            raise AuthTokenDecodeError(str(e))
+
+        try:
+            current_user = User.query.get(data["user_id"])
+            if not current_user:
+                raise UserNotFound()
+        except Exception as e:
+            raise DatabaseError(str(e))
+
         return f(current_user, *args, **kwargs)
 
     return decorated

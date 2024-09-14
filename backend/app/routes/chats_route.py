@@ -1,9 +1,7 @@
 from flask import Blueprint
 
-from ..utils.protected_route import access_required
-
 from ..models import Chat
-
+from ..utils.protected_route import access_required
 
 chats = Blueprint("chats", __name__)
 

@@ -1,5 +1,6 @@
-from werkzeug.security import generate_password_hash
 import uuid
+
+from werkzeug.security import generate_password_hash
 
 from ..models import User, db
 

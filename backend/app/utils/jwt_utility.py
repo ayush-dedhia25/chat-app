@@ -1,31 +1,38 @@
 from datetime import datetime, timedelta, timezone
-from flask import current_app
+from typing import Any
+
 import jwt
+from flask import current_app
 
 
-def create_access_token(data: dict, expires_delta: int = None):
+def create_access_token(data: Any, expires_delta: timedelta = None):
     """
-    Create a JWT access token.
+    Create a JWT access token containing the user_id.
 
     Args:
         data (dict): A dictionary containing the user_id to be stored in the token
-        expires_delta (int, optional): The time in seconds that the token should expire
+        expires_delta (timedelta, optional): The time in seconds that the token should expire
             in. Defaults to 1 hour.
 
     Returns:
         str: The encoded JWT token
     """
     jwt_secret = current_app.config["SECRET_KEY"]
+
     if expires_delta is None:
         expires_delta = timedelta(hours=1)
 
     expire = datetime.now(timezone.utc) + expires_delta
-    payload = {
-        "user_id": data["user_id"],
-        "exp": expire,
-        "iat": datetime.now(timezone.utc),
-    }
-    return jwt.encode(payload, jwt_secret, algorithm="HS256")
+
+    return jwt.encode(
+        {
+            "user_id": data["user_id"],
+            "exp": expire,
+            "iat": datetime.now(timezone.utc),
+        },
+        jwt_secret,
+        algorithm="HS256",
+    )
 
 
 def decode_access_token(token: str):
@@ -77,19 +84,21 @@ def is_token_valid(token: str):
     return decode_access_token(token) is not None
 
 
-def create_refresh_token(data: dict, expires_delta: int = None):
+def create_refresh_token(data: dict, expires_delta: timedelta = None):
     """
-    Create a JWT refresh token.
+    Create a JWT refresh token containing the user_id.
 
     Args:
         data (dict): A dictionary containing the user_id to be stored in the token
-        expires_delta (int, optional): The time in seconds that the token should expire
+        expires_delta (timedelta, optional): The time in seconds that the token should expire
             in. Defaults to 7 days.
 
     Returns:
-        str: The encoded JWT token
+        str: The encoded JWT refresh token
     """
-    expires_delta = timedelta(days=7)
+    if expires_delta is None:
+        expires_delta = timedelta(days=7)
+
     return create_access_token(data, expires_delta)
 
 
