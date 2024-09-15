@@ -1,6 +1,6 @@
 import { ListFilterIcon, SearchIcon } from "lucide-react";
 
-function ChatListHeader({ searchInputRef }) {
+function ChatListHeader() {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between py-2 pl-4 pr-2">
@@ -13,7 +13,6 @@ function ChatListHeader({ searchInputRef }) {
       <div className="flex items-center gap-2 p-2 mx-4 border-b rounded bg-neutral-800 border-zinc-200">
         <SearchIcon size={16} className="text-zinc-400" />
         <input
-          ref={searchInputRef}
           type="text"
           placeholder="Search or start a new chat"
           className="flex-grow text-sm font-medium bg-transparent focus:outline-none text-zinc-400"
