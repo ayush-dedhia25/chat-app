@@ -1,23 +1,19 @@
-from flask_socketio import emit, join_room, leave_room
+from flask import request
+from flask_socketio import join_room
 
 from .extensions import socketio
+from .utils.jwt_utility import get_user_id_from_token
 
 
-@socketio.on("join")
-def handle_join(data):
-    room = data["room"]
-    join_room(room)
-    emit("message", {"msg": f"{data['username']} has joined the room."}, room=room)
+@socketio.on("connect")
+def handle_connect():
+    token = request.args.get("token")
+    if not token:
+        return False  # Reject the connection
 
+    user_id = get_user_id_from_token(token)
+    if not user_id:
+        return False  # Reject the connection
 
-@socketio.on("leave")
-def handle_leave(data):
-    room = data["room"]
-    leave_room(room)
-    emit("message", {"msg": f"{data['username']} has left the room."}, room=room)
-
-
-@socketio.on("send_message")
-def handle_message(data):
-    room = data["room"]
-    emit("message", {"msg": data["msg"], "username": data["username"]}, room=room)
+    join_room(f"user:{user_id}")
+    print(f"User {user_id} connected and joined room user:{user_id}")

@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Light grey background */
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888; /* Dark grey color */
+  border-radius: 8px;
+}
+
 #sidebar {
   .nav-item {
     position: relative;

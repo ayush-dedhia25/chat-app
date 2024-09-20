@@ -38,7 +38,8 @@ def login():
     if user and check_password_hash(user.password, data["password"]):
         token_payload = {"user_id": user.id}
 
-        token = create_access_token(token_payload, expires_delta=timedelta(seconds=15))
+        token_expiration_time = timedelta(minutes=10)
+        token = create_access_token(token_payload, expires_delta=token_expiration_time)
         refresh_token = create_refresh_token(
             token_payload, expires_delta=timedelta(days=7)
         )
