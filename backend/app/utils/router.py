@@ -12,7 +12,10 @@ def register_routes(app: Flask):
     Args:
         app (Flask): The Flask app to register the routes with
     """
-    from ..routes import chats as chats_blueprint, auth as auth_blueprint
+    from ..routes import auth as auth_blueprint
+    from ..routes import chats as chats_blueprint
+    from ..routes import users as users_blueprint
 
     app.register_blueprint(chats_blueprint)
     app.register_blueprint(auth_blueprint)
+    app.register_blueprint(users_blueprint)

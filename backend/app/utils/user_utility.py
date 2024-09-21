@@ -1,8 +1,7 @@
-import uuid
-
 from werkzeug.security import generate_password_hash
 
-from ..models import User, db
+from ..extensions import db
+from ..models import Chat, ChatMember, ChatRequest, User
 
 
 def create_user(username: str, email: str, password: str):
@@ -138,3 +137,28 @@ def change_password(user_id: str, new_password: str):
     except Exception as e:
         db.session.rollback()
         return False, f"An error occurred: {str(e)}"
+
+
+def get_relationship_status(user_id: str, other_user_id: str):
+    # Check if there is an existing chat (i.e. they are already friends)
+    existing_chat = (
+        Chat.query.filter(Chat.chat_type == "one-on-one")
+        .join(ChatMember)
+        .filter(ChatMember.member_id.in_([user_id, other_user_id]))
+        .group_by(Chat.id)
+        .having(db.func.count(Chat.id) == 2)
+        .first()
+    )
+
+    if existing_chat:
+        return "friends"
+
+    # Check if pending chat request exists
+    existing_request = ChatRequest.query.filter_by(
+        sender_id=user_id, receiver_id=other_user_id, status="pending"
+    ).first()
+
+    if existing_request:
+        return "requested"
+
+    return "unknown"
