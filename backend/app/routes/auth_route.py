@@ -22,10 +22,10 @@ def login():
     if the credentials are valid, or a 400 status code with a JSON response
     containing validation errors if the request body is invalid.
 
-    If the credentials are invalid, returns a 401 status code with a JSON
+    If the credentials are invalid, returns a 404 status code with a JSON
     response containing an error message.
 
-    The token will expire in 1 hour.
+    The token will expire in 30 minutes.
     """
     try:
         data = login_schema.load(request.json)
@@ -35,10 +35,10 @@ def login():
 
     user = User.query.filter_by(email=data["email"]).first()
 
-    if user and check_password_hash(user.password, data["password"]):
+    if user and check_password_hash(user.password_hash, data["password"]):
         token_payload = {"user_id": user.id}
 
-        token_expiration_time = timedelta(minutes=10)
+        token_expiration_time = timedelta(minutes=30)
         token = create_access_token(token_payload, expires_delta=token_expiration_time)
         refresh_token = create_refresh_token(
             token_payload, expires_delta=timedelta(days=7)
@@ -58,7 +58,7 @@ def login():
             message="Login successful",
         )
 
-    return send_response(status_code=404, success=False, message="User not found")
+    return send_response(status_code=404, success=False, message="Invalid credentials")
 
 
 @auth.route("/sign-up", methods=["POST"])
@@ -67,7 +67,7 @@ def signup():
     Create a new user and return a JSON response with a message and
     the corresponding HTTP status code.
 
-    The request body should contain the username, email and password in
+    The request body should contain the username, email, and password in
     JSON format.
 
     Returns:

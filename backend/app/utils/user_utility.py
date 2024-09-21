@@ -28,13 +28,15 @@ def create_user(username: str, email: str, password: str):
 
     hashed_password = generate_password_hash(password)
     new_user = User(
-        id=str(uuid.uuid4()), username=username, email=email, password=hashed_password
+        username=username,
+        email=email,
+        password_hash=hashed_password,
     )
 
     try:
         db.session.add(new_user)
         db.session.commit()
-        return new_user, "User registered successfully", 200
+        return new_user, "User registered successfully", 201
     except Exception as e:
         print(e)
         db.session.rollback()
@@ -130,7 +132,7 @@ def change_password(user_id: str, new_password: str):
         return False, "User not found"
 
     try:
-        user.password = generate_password_hash(new_password, method="sha256")
+        user.password_hash = generate_password_hash(new_password)
         db.session.commit()
         return True, "Password changed successfully"
     except Exception as e:

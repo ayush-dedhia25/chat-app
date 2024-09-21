@@ -1,8 +1,7 @@
-from calendar import c
 from datetime import datetime, timezone
-from enum import member
 
 from flask import Blueprint, request
+from sqlalchemy.orm import joinedload
 
 from ..extensions import db, socketio
 from ..models import Chat, ChatMember, ChatRequest, User
@@ -15,25 +14,30 @@ chats = Blueprint("chats", __name__, url_prefix="/chats")
 @chats.route("/", methods=["GET"])
 @access_required
 def get_chats(user):
-    user_chats = Chat.query.join(ChatMember).filter(ChatMember.user_id == user.id).all()
+    # Retrieve chats where the user is a member
+    user_chats = (
+        Chat.query.join(ChatMember)
+        .filter(ChatMember.member_id == user.id)
+        .options(joinedload(Chat.memberships).joinedload(ChatMember.member))
+        .all()
+    )
 
     chats_data = []
     for chat in user_chats:
         # Get the members of the chat
-        chat_members = ChatMember.query.filter_by(chat_id=chat.id).all()
-        member_ids = [member.user_id for member in chat_members]
-
-        # Fetch member details
-        members = User.query.filter(User.id.in_(member_ids)).all()
         members_data = [
-            {"id": member.id, "username": member.username, "email": member.email}
-            for member in members
+            {
+                "id": member.member.id,
+                "username": member.member.username,
+                "email": member.member.email,
+            }
+            for member in chat.memberships
         ]
 
         chat_info = {
             "id": chat.id,
             "name": chat.name,
-            "type": chat.type,
+            "chat_type": chat.chat_type,
             "created_at": chat.created_at.isoformat(),
             "updated_at": chat.updated_at.isoformat(),
             "members": members_data,
@@ -54,7 +58,7 @@ def handle_send_chat_request(user):
     data = request.get_json()
     receiver_id = data.get("receiver_id")
 
-    # validate the receiver_id
+    # Validate the receiver_id
     if not receiver_id:
         return send_response(
             data={"error": "Receiver ID is required"},
@@ -71,7 +75,7 @@ def handle_send_chat_request(user):
             status_code=400,
         )
 
-    # check if the receiver exists
+    # Check if the receiver exists
     receiver = User.query.get(receiver_id)
     if not receiver:
         return send_response(
@@ -81,11 +85,11 @@ def handle_send_chat_request(user):
             status_code=404,
         )
 
-    # check if chat already exists between the two users
+    # Check if a chat already exists between the two users
     existing_chat = (
-        Chat.query.join(ChatMember)
-        .filter(ChatMember.chat_id == Chat.id, Chat.type == "one-to-one")
-        .filter((ChatMember.user_id == user.id) | (ChatMember.user_id == receiver_id))
+        Chat.query.filter(Chat.chat_type == "one-on-one")
+        .join(ChatMember)
+        .filter(ChatMember.member_id.in_([user.id, receiver_id]))
         .group_by(Chat.id)
         .having(db.func.count(Chat.id) == 2)
         .first()
@@ -98,22 +102,38 @@ def handle_send_chat_request(user):
             status_code=400,
         )
 
-    # create a new chat request
+    # Check if a pending chat request already exists
+    existing_request = ChatRequest.query.filter_by(
+        sender_id=user.id, receiver_id=receiver_id, status="pending"
+    ).first()
+    if existing_request:
+        return send_response(
+            data={"error": "Chat request already sent."},
+            message="Failed to send chat request",
+            success=False,
+            status_code=400,
+        )
+
+    # Create a new chat request
     chat_request = ChatRequest(
         sender_id=user.id, receiver_id=receiver_id, status="pending"
     )
     db.session.add(chat_request)
     db.session.commit()
 
-    # notify the user via WebSocket
+    # Notify the receiver via WebSocket
     notification_data = {
         "id": chat_request.id,
         "sender_id": user.id,
-        "send_username": user.username,
+        "sender_username": user.username,
         "created_at": chat_request.created_at.isoformat(),
     }
 
-    socketio.emit("chat_request", notification_data, to=receiver_id)
+    socketio.emit(
+        "chat_request",
+        notification_data,
+        to=f"user_{receiver_id}",
+    )
 
     return send_response(
         message="Chat request sent successfully", success=True, status_code=201
@@ -147,22 +167,22 @@ def respond_to_chat_request(user, request_id):
     db.session.commit()
 
     if status == "accepted":
-        # create a new chat
-        chat = Chat(type="one-on-one")
+        # Create a new chat
+        chat = Chat(chat_type="one-on-one")
         db.session.add(chat)
         db.session.commit()
 
         # Add both users to the chat
         member1 = ChatMember(
             chat_id=chat.id,
-            user_id=chat_request.sender_id,
-            role="member",
+            member_id=chat_request.sender_id,
+            member_role="member",
             joined_at=datetime.now(timezone.utc),
         )
         member2 = ChatMember(
             chat_id=chat.id,
-            user_id=user.id,
-            role="member",
+            member_id=user.id,
+            member_role="member",
             joined_at=datetime.now(timezone.utc),
         )
         db.session.add_all([member1, member2])
@@ -172,17 +192,25 @@ def respond_to_chat_request(user, request_id):
             "request_id": request_id,
             "status": "accepted",
             "chat_id": chat.id,
-            "chat_type": chat.type,
+            "chat_type": chat.chat_type,
             "created_at": chat.created_at.isoformat(),
         }
-        socketio.emit("chat_request:accepted", response_data, to=chat_request.sender_id)
+        socketio.emit(
+            "chat_request:accepted",
+            response_data,
+            to=f"user_{chat_request.sender_id}",
+        )
     else:
         chat_request.status = status
         db.session.commit()
 
-        # Notify the user about the request rejection
+        # Notify the sender about the request rejection
         response_data = {"request_id": request_id, "status": "rejected"}
-        socketio.emit("chat_request:rejected", response_data, to=chat_request.sender_id)
+        socketio.emit(
+            "chat_request:rejected",
+            response_data,
+            to=f"user_{chat_request.sender_id}",
+        )
 
     return send_response(
         message="Chat request responded successfully", success=True, status_code=200
