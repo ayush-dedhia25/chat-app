@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 
+import PrivateRoute from "./components/PrivateRoute";
 import AuthLayout from "./layouts/AuthLayout";
 import RootLayout from "./layouts/RootLayout";
 import LoginPage from "./pages/auth/login";
@@ -13,9 +14,30 @@ export const routes = createBrowserRouter([
     path: "/",
     element: <RootLayout />,
     children: [
-      { path: "chats", element: <Chats /> },
-      { path: "calls", element: <CallsPage /> },
-      { path: "status", element: <StatusPage /> },
+      {
+        path: "chats",
+        element: (
+          <PrivateRoute>
+            <Chats />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "calls",
+        element: (
+          <PrivateRoute>
+            <CallsPage />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "status",
+        element: (
+          <PrivateRoute>
+            <StatusPage />
+          </PrivateRoute>
+        ),
+      },
     ],
   },
   {

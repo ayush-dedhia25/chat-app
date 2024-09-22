@@ -1,10 +1,31 @@
 import { CornerRightDownIcon, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import SearchUserResultCard from "../components/chats/SearchUserResultCard";
+import useDebounce from "../hooks/useDebounce";
 import useModal from "../hooks/useModal";
+import apiClient from "../api-client";
 
 function SearchUserModal({ isOpen, onClose }) {
+  const [searchTerm, setSearchTerm] = useState("");
   const modalRef = useModal(isOpen, onClose);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  useEffect(() => {
+    if (debouncedSearchTerm) {
+      const fetchMatchingUsers = async () => {
+        try {
+          const response = await apiClient.get(
+            `/users?query=${debouncedSearchTerm}`
+          );
+          console.log(response);
+        } catch (error) {
+          console.log(error);
+        }
+      };
+      fetchMatchingUsers();
+    }
+  }, [debouncedSearchTerm]);
 
   const handleClose = () => {
     onClose();
@@ -35,6 +56,8 @@ function SearchUserModal({ isOpen, onClose }) {
             type="text"
             placeholder="Search by name or username"
             className="w-full p-2.5 px-3.5 text-sm bg-transparent border rounded-md border-neutral-700 text-neutral-300 placeholder:text-neutral-500 focus:ring-2 focus:ring-violet-400 focus:outline-none"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
 
           <div className="mt-4">

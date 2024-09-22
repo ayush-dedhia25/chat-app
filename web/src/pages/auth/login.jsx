@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import * as Yup from "yup";
 
-import { useAuth } from "../../providers/auth-provider";
+import useAuth from "../../hooks/useAuth";
 
 const validationSchema = Yup.object().shape({
   email: Yup.string()
@@ -23,6 +23,14 @@ function LoginPage() {
   });
   const { login } = useAuth();
 
+  const handleLogin = async (data) => {
+    try {
+      await login(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="flex items-center justify-center flex-1">
       <div className="w-[60%] flex flex-col gap-6">
@@ -36,7 +44,7 @@ function LoginPage() {
           </p>
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit(login)}>
+        <form className="space-y-5" onSubmit={handleSubmit(handleLogin)}>
           <div className="space-y-2">
             <label htmlFor="email" className="block text-sm text-neutral-300">
               Email

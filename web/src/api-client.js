@@ -1,4 +1,9 @@
 import axios from "axios";
+import {
+  decryptData,
+  encryptData,
+  generateAndStoreKey,
+} from "./utils/encryption";
 
 class ApiClient {
   /**
@@ -53,10 +58,26 @@ class ApiClient {
    * @returns {Promise<import("axios").AxiosRequestConfig>}
    */
   async handleRequest(config) {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;
+    const encryptedToken = localStorage.getItem("x-auth-token");
+
+    if (encryptedToken) {
+      try {
+        // Get the stored encryption key or generate one if its not available
+        const encryptionKey = await generateAndStoreKey();
+
+        // Decrypt the token
+        const token = await decryptData(
+          JSON.parse(encryptedToken),
+          encryptionKey
+        );
+
+        // Add the decrypted token to the Authorization header
+        config.headers["Authorization"] = `Bearer ${token}`;
+      } catch (error) {
+        console.log("Failed to decrypt token:", error);
+      }
     }
+
     return config;
   }
 
@@ -93,7 +114,7 @@ class ApiClient {
       this.isRefreshing = true;
 
       try {
-        const newToken = await this.refreshToken();
+        const newToken = await this.pleaseRefreshToken();
         this.onRefreshSuccess(newToken);
         originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
         return this.api(originalRequest);
@@ -106,23 +127,43 @@ class ApiClient {
   }
 
   /**
-   * Refreshes the auth token by making a request to the server's refresh token endpoint.
-   * If the request is successful, the new token is stored in local storage and returned.
-   * If the request fails, the promise is rejected with the error.
+   * Retrieves a new access token by making a request to the server using the current refresh token
    *
-   * @returns {Promise<string>} A promise that resolves with the new auth token.
+   * @returns {Promise<string>} The new access token
+   * @throws {Error} If the refresh token is not found or if the request to the server fails
    */
-  async refreshToken() {
-    const response = await axios.post(
-      "/auth/refresh-token",
-      {},
-      {
-        withCredentials: true,
-      }
-    );
-    const newToken = response.data.token;
-    localStorage.setItem("authToken", newToken);
-    return newToken;
+  async pleaseRefreshToken() {
+    // Retrieve the encrypted refresh token from localStorage
+    const encryptedRefreshToken = localStorage.getItem("x-refresh-token");
+
+    if (!encryptedRefreshToken) {
+      throw new Error("Refresh token not found");
+    }
+
+    try {
+      // Get the stored encryption key or generate one if it's not available
+      const encryptionKey = await generateAndStoreKey();
+
+      // Decrypt the refresh token
+      const refreshToken = await decryptData(
+        JSON.parse(encryptedRefreshToken),
+        encryptionKey
+      );
+
+      // Make the request to the server to get a new access token using the decrypted refresh token
+      const { data: response } = await axios.post("/auth/refresh", {
+        refreshToken,
+      });
+
+      // Store the new access token (you can encrypt it before storing if needed)
+      const newToken = response.data.token;
+      const encryptedToken = await encryptData(newToken, encryptionKey);
+      localStorage.setItem("x-refresh-token", JSON.stringify(encryptedToken));
+      return newToken;
+    } catch (error) {
+      console.error("Failed to refresh token:", error);
+      throw error;
+    }
   }
 
   /**

@@ -16,7 +16,12 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dev.db"
     app.config["SECRET_KEY"] = "your_secret_key"
 
-    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+    CORS(
+        app,
+        resources={r"/*": {"origins": "http://localhost:5173"}},
+        supports_credentials=True,
+        allow_headers=["Content-Type", "Authorization"],
+    )
 
     db.init_app(app)
     socketio.init_app(app)

@@ -6,7 +6,11 @@ from werkzeug.security import check_password_hash
 
 from ..models import User
 from ..schema import login_schema, signup_schema
-from ..utils.jwt_utility import create_access_token, create_refresh_token
+from ..utils.jwt_utility import (
+    create_access_token,
+    create_refresh_token,
+    refresh_access_token,
+)
 from ..utils.response import send_response
 from ..utils.user_utility import create_user
 
@@ -56,6 +60,8 @@ def login():
                 },
             },
             message="Login successful",
+            status_code=200,
+            success=True,
         )
 
     return send_response(status_code=404, success=False, message="Invalid credentials")
@@ -89,6 +95,46 @@ def signup():
     return send_response(
         message=message, status_code=status_code, success=user is not None
     )
+
+
+@auth.route("/refresh", methods=["POST"])
+def refresh_token():
+    """
+    Refresh an access token using a refresh token.
+
+    The request body should contain the refresh token in JSON format.
+
+    Returns:
+        A JSON response with the new access token and the corresponding HTTP status code
+    """
+    try:
+        body = request.json
+        refresh_token = body.get("refreshToken")
+
+        if not refresh_token:
+            return send_response(
+                success=False, message="Refresh token is required", status_code=400
+            )
+
+        # Refresh the access token using the refresh token
+        new_access_token = refresh_access_token(refresh_token)
+
+        if not new_access_token:
+            return send_response(
+                success=False,
+                message="Invalid or expired refresh token",
+                status_code=401,
+            )
+
+        # Return the new access token
+        return send_response(
+            data={"token": new_access_token}, success=True, status_code=200
+        )
+    except Exception as e:
+        print(f"Error refreshing token: {str(e)}")
+        return send_response(
+            success=False, message="Failed to refresh token", status_code=500
+        )
 
 
 @auth.errorhandler(500)

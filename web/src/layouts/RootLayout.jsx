@@ -14,7 +14,7 @@ function RootLayout() {
   }, [navigate]);
 
   return (
-    <main className="h-screen overflow-hidden flex font-sans">
+    <main className="relative flex h-screen overflow-hidden font-sans">
       <Sidebar />
       <Outlet />
     </main>

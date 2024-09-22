@@ -114,5 +114,7 @@ def refresh_access_token(token: str):
     """
     user_id = get_user_id_from_token(token)
     if user_id:
-        return create_access_token({"user_id": user_id})
+        # Refresh token expiration time (7 days by default)
+        expires_delta = timedelta(days=7)
+        return create_access_token({"user_id": user_id}, expires_delta=expires_delta)
     return None

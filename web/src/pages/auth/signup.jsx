@@ -1,8 +1,10 @@
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
+
+import { mutationApi } from "../../hooks/useApi";
 
 const validationSchema = Yup.object().shape({
   username: Yup.string()
@@ -32,6 +34,8 @@ const validationSchema = Yup.object().shape({
 });
 
 function SignupPage() {
+  const navigate = useNavigate();
+
   const [formStep, setFormStep] = useState(1);
   const totalSteps = 3;
 
@@ -48,8 +52,13 @@ function SignupPage() {
 
   const handleFormSubmission = async (data) => {
     if (formStep === totalSteps) {
-      // TODO: Implement form submission logic
-      console.log(data);
+      // eslint-disable-next-line no-unused-vars
+      const { cPassword, ...formData } = data;
+      const result = await mutationApi("/auth/sign-up", formData);
+      if (result?.success) {
+        console.log(result);
+        navigate("/auth/login");
+      }
     }
   };
 
