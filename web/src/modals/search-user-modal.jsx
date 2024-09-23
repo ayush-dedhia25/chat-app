@@ -1,31 +1,17 @@
-import { CornerRightDownIcon, XIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CornerRightDownIcon, Loader2Icon, XIcon } from "lucide-react";
+import { useState } from "react";
 
 import SearchUserResultCard from "../components/chats/SearchUserResultCard";
 import useDebounce from "../hooks/useDebounce";
 import useModal from "../hooks/useModal";
-import apiClient from "../api-client";
+import useSearchUsers from "../hooks/useSearchUsers";
 
 function SearchUserModal({ isOpen, onClose }) {
   const [searchTerm, setSearchTerm] = useState("");
+
   const modalRef = useModal(isOpen, onClose);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
-
-  useEffect(() => {
-    if (debouncedSearchTerm) {
-      const fetchMatchingUsers = async () => {
-        try {
-          const response = await apiClient.get(
-            `/users?query=${debouncedSearchTerm}`
-          );
-          console.log(response);
-        } catch (error) {
-          console.log(error);
-        }
-      };
-      fetchMatchingUsers();
-    }
-  }, [debouncedSearchTerm]);
+  const { data, isLoading } = useSearchUsers(debouncedSearchTerm);
 
   const handleClose = () => {
     onClose();
@@ -61,30 +47,40 @@ function SearchUserModal({ isOpen, onClose }) {
           />
 
           <div className="mt-4">
-            {/* <p className="flex items-center justify-center gap-2 text-sm text-neutral-400">
-              <Loader2Icon size={20} className="animate-spinner" />
-              <span className="animate-pulser">Searching...</span>
-            </p> */}
-            <div>
-              <h2 className="flex items-center gap-2 text-neutral-400">
-                Found 2 Results <CornerRightDownIcon size={16} />
-              </h2>
+            {isLoading ? (
+              <p className="flex items-center justify-center gap-2 text-sm text-neutral-400">
+                <Loader2Icon size={20} className="animate-spinner" />
+                <span className="animate-pulser">Searching...</span>
+              </p>
+            ) : data === null ? (
+              // Show this message when the user have not started to search for any user yet
+              <p className="flex items-center justify-center gap-2 text-sm text-neutral-400">
+                Start searching your friends
+              </p>
+            ) : data !== null && data?.results.length === 0 ? (
+              // Show this message when no user found while trying to search for a user
+              <p className="flex items-center justify-center gap-2 text-sm text-neutral-400">
+                No user found! {`"${debouncedSearchTerm}"`}
+              </p>
+            ) : (
+              <div>
+                <h2 className="flex items-center gap-2 text-neutral-400">
+                  Found {data?.results.length} Results <CornerRightDownIcon size={16} />
+                </h2>
 
-              <div className="flex flex-col gap-3 pr-2.5 mt-4 -mr-1.5 overflow-y-auto max-h-80">
-                <SearchUserResultCard
-                  name="Ayush Dedhia"
-                  username="d_ayush25"
-                  profile="https://img.freepik.com/free-photo/love-illustrated-anime-style_23-2151103287.jpg"
-                  isFriend
-                  isVerified
-                />
-                <SearchUserResultCard
-                  name="Jay Shah"
-                  username="jayyy_shahh"
-                  profile="https://m.media-amazon.com/images/I/81OcZThCE9L._AC_UF1000,1000_QL80_.jpg"
-                />
+                <div className="flex flex-col gap-3 pr-2.5 mt-4 -mr-1.5 overflow-y-auto max-h-80">
+                  {data?.results.map((result) => (
+                    <SearchUserResultCard
+                      key={result.id}
+                      name={result.email}
+                      username={result.username}
+                      profile={result.profile_picture}
+                      friendStatus={result.relationship_status}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

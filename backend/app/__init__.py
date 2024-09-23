@@ -8,13 +8,14 @@ def create_app():
     from flask import Flask
     from flask_cors import CORS
 
+    from config import Config as AppConfig
+
     from .extensions import db, socketio
     from .utils.register_error_handlers import register_app_error_handlers
     from .utils.router import register_routes
 
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///dev.db"
-    app.config["SECRET_KEY"] = "your_secret_key"
+    app.config.from_object(AppConfig)
 
     CORS(
         app,

@@ -1,21 +1,25 @@
 import { yupResolver } from "@hookform/resolvers/yup";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 
 import { mutationApi } from "../../hooks/useApi";
+import { cn } from "../../utils";
 
 const validationSchema = Yup.object().shape({
+  fullName: Yup.string()
+    .min(2, "Name must be at least 2 characters")
+    .required("Username is required"),
+
   username: Yup.string()
     .min(3, "Username must be at least 3 characters")
     .max(20, "Username cannot be longer than 20 characters")
-    .matches(/^[a-zA-Z0-9]+$/, "Username can only contain letters and numbers")
+    .matches(/^[a-zA-Z0-9_]+$/, "Username can only contain letters and numbers")
     .required("Username is required"),
 
-  email: Yup.string()
-    .email("Invalid email format")
-    .required("Email is required"),
+  email: Yup.string().email("Invalid email format").required("Email is required"),
 
   password: Yup.string()
     .min(8, "Password must be at least 8 characters")
@@ -37,6 +41,7 @@ function SignupPage() {
   const navigate = useNavigate();
 
   const [formStep, setFormStep] = useState(1);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const totalSteps = 3;
 
   const {
@@ -56,7 +61,6 @@ function SignupPage() {
       const { cPassword, ...formData } = data;
       const result = await mutationApi("/auth/sign-up", formData);
       if (result?.success) {
-        console.log(result);
         navigate("/auth/login");
       }
     }
@@ -93,40 +97,64 @@ function SignupPage() {
             Create your account on Textify! 👋🏻
           </h2>
           <p className="mt-3 text-sm leading-6 text-center text-neutral-300">
-            Stay connected with the people who matter. Sign up now to start
-            chatting effortlessly!
+            Stay connected with the people who matter. Sign up now to start chatting
+            effortlessly!
           </p>
         </div>
 
         <form onSubmit={handleSubmit(handleFormSubmission)}>
           {formStep === 1 && (
-            <div className="relative space-y-2">
-              <label
-                htmlFor="username"
-                className="block text-sm text-neutral-300"
-              >
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                {...register("username")}
-                placeholder="johndoe02"
-                className="w-full px-4 py-2 text-sm bg-transparent border rounded-md text-zinc-300 placeholder:text-zinc-400 focus:outline-1 border-neutral-400 focus:outline-offset-[3px] focus:ring-0"
-              />
-              {errors.username && (
-                <small className="absolute block !mt-3 text-red-400">
-                  {errors.username.message}
-                </small>
-              )}
-            </div>
+            <>
+              <div className="relative mb-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="fullName" className="block text-sm text-neutral-300">
+                    Full Name
+                  </label>
+                  {errors.fullName && (
+                    <small className="text-red-400">{errors.fullName.message}</small>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  id="fullName"
+                  {...register("fullName")}
+                  placeholder="John Doe"
+                  className={cn(
+                    "w-full px-4 py-2 text-sm bg-transparent border rounded-md text-zinc-300 placeholder:text-zinc-400 focus:outline-1 border-neutral-400 focus:outline-offset-[3px] focus:ring-0"
+                  )}
+                />
+              </div>
+
+              <div className="relative space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="username" className="block text-sm text-neutral-300">
+                    Username
+                  </label>
+                  {errors.username && (
+                    <small className="text-red-400">{errors.username.message}</small>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  id="username"
+                  {...register("username")}
+                  placeholder="johndoe02"
+                  className="w-full px-4 py-2 text-sm bg-transparent border rounded-md text-zinc-300 placeholder:text-zinc-400 focus:outline-1 border-neutral-400 focus:outline-offset-[3px] focus:ring-0"
+                />
+              </div>
+            </>
           )}
 
           {formStep === 2 && (
             <div className="relative space-y-2">
-              <label htmlFor="email" className="block text-sm text-neutral-300">
-                Email
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="email" className="block text-sm text-neutral-300">
+                  Email
+                </label>
+                {errors.email && (
+                  <small className="text-red-400">{errors.email.message}</small>
+                )}
+              </div>
               <input
                 type="email"
                 id="email"
@@ -134,61 +162,76 @@ function SignupPage() {
                 placeholder="Example@email.com"
                 className="w-full px-4 py-2 text-sm bg-transparent border rounded-md text-zinc-300 placeholder:text-zinc-500 focus:outline-1 border-neutral-400 focus:outline-offset-[3px] focus:ring-0"
               />
-              {errors.email && (
-                <small className="absolute block text-red-400">
-                  {errors.email.message}
-                </small>
-              )}
             </div>
           )}
 
           {formStep === 3 && (
             <>
-              <div className="mb-6 space-y-2">
-                <label
-                  htmlFor="password"
-                  className="block text-sm text-neutral-300"
-                >
-                  Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="Your password"
-                  id="password"
-                  {...register("password")}
-                  className="w-full px-4 py-2 text-sm bg-transparent border rounded-md text-zinc-300 placeholder:text-zinc-400 focus:outline-1 border-neutral-400 focus:outline-offset-[3px] focus:ring-0"
-                />
-                {errors.password && (
-                  <small className="!mt-2 text-red-400 block">
-                    {errors.password.message}
-                  </small>
-                )}
+              <div className="mb-5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="password" className="block text-sm text-neutral-300">
+                    Password
+                  </label>
+                  {errors.password && (
+                    <small className="block text-red-400">
+                      {errors.password.message}
+                    </small>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={passwordVisible ? "text" : "password"}
+                    placeholder="Your password"
+                    id="password"
+                    {...register("password")}
+                    className="w-full px-4 py-2 text-sm bg-transparent border rounded-md text-zinc-300 placeholder:text-zinc-400 focus:outline-1 border-neutral-400 focus:outline-offset-[3px] focus:ring-0"
+                  />
+                  <button
+                    className="absolute top-2/4 -translate-y-2/4 right-4 text-neutral-400"
+                    onClick={() => setPasswordVisible(!passwordVisible)}
+                  >
+                    {passwordVisible ? (
+                      <EyeOffIcon size={20} strokeWidth={1.5} />
+                    ) : (
+                      <EyeIcon size={20} strokeWidth={1.5} />
+                    )}
+                  </button>
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <label
-                  htmlFor="cPassword"
-                  className="block text-sm text-neutral-300"
-                >
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="Repeat your password"
-                  id="cPassword"
-                  {...register("cPassword")}
-                  className="w-full px-4 py-2 text-sm bg-transparent border rounded-md text-zinc-300 placeholder:text-zinc-400 focus:outline-1 border-neutral-400 focus:outline-offset-[3px] focus:ring-0"
-                />
-                {errors.cPassword && (
-                  <small className="!mt-2 text-red-400 block">
-                    {errors.cPassword.message}
-                  </small>
-                )}
+              <div className="relative space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="cPassword" className="block text-sm text-neutral-300">
+                    Confirm Password
+                  </label>
+                  {errors.cPassword && (
+                    <small className="text-red-400">{errors.cPassword.message}</small>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    type={passwordVisible ? "text" : "password"}
+                    placeholder="Repeat your password"
+                    id="cPassword"
+                    {...register("cPassword")}
+                    className="w-full px-4 py-2 text-sm bg-transparent border rounded-md text-zinc-300 placeholder:text-zinc-400 focus:outline-1 border-neutral-400 focus:outline-offset-[3px] focus:ring-0"
+                  />
+                  <button
+                    className="absolute top-2/4 -translate-y-2/4 right-4 text-neutral-400"
+                    onClick={() => setPasswordVisible(!passwordVisible)}
+                  >
+                    {passwordVisible ? (
+                      <EyeOffIcon size={20} strokeWidth={1.5} />
+                    ) : (
+                      <EyeIcon size={20} strokeWidth={1.5} />
+                    )}
+                  </button>
+                </div>
               </div>
             </>
           )}
 
-          <div className="flex items-center justify-between mt-10">
+          <div className="flex items-center justify-between mt-5">
             <p className="text-sm text-center text-zinc-400">
               Already have an account?{" "}
               <Link

@@ -10,7 +10,7 @@ from ..utils.response import send_response
 users = Blueprint("users", __name__, url_prefix="/users")
 
 
-@users.route("/", methods=["GET"])
+@users.route("/", methods=["GET"], strict_slashes=False)
 @access_required
 def search_users(current_user):
     search_query = request.args.get("query", "").strip()

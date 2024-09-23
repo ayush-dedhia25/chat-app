@@ -1,17 +1,10 @@
 import { createContext, useEffect, useState } from "react";
 
+import { REFRESH_TOKEN_KEY, TOKEN_KEY, USER_KEY } from "../constants";
 import { mutationApi } from "../hooks/useApi";
-import {
-  decryptData,
-  encryptData,
-  generateAndStoreKey,
-} from "../utils/encryption";
+import { decryptData, encryptData, generateAndStoreKey } from "../utils/encryption";
 
 export const AuthContext = createContext();
-
-const TOKEN_KEY = "x-auth-token";
-const USER_KEY = "x-auth-user";
-const REFRESH_TOKEN_KEY = "x-refresh-token";
 
 /**
  * @typedef User
@@ -36,10 +29,7 @@ const storeEncryptedData = async (key, token, refreshToken, user) => {
     const encryptedUser = await encryptData(user, key);
 
     localStorage.setItem(TOKEN_KEY, JSON.stringify(encryptedToken));
-    localStorage.setItem(
-      REFRESH_TOKEN_KEY,
-      JSON.stringify(encryptedRefreshToken)
-    );
+    localStorage.setItem(REFRESH_TOKEN_KEY, JSON.stringify(encryptedRefreshToken));
     localStorage.setItem(USER_KEY, JSON.stringify(encryptedUser));
   } catch (error) {
     console.log("Failed to encrypt data:", error);
