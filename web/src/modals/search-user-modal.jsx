@@ -23,7 +23,7 @@ function SearchUserModal({ isOpen, onClose }) {
       className="z-50 overflow-hidden bg-transparent backdrop:bg-black/70 backdrop:backdrop-blur-[2px]"
       onClose={handleClose}
     >
-      <div className="w-[35dvw] bg-neutral-800 rounded-md border border-neutral-600">
+      <div className="w-[80dvw] sm:w-[70dvw] md:w-[35dvw] bg-neutral-800 rounded-md border border-neutral-600">
         <header className="relative flex items-center justify-between gap-4 px-4 py-3 border-b border-neutral-700">
           <h3 className="text-sm font-semibold tracking-wider uppercase text-neutral-200">
             Search User
@@ -69,14 +69,8 @@ function SearchUserModal({ isOpen, onClose }) {
                 </h2>
 
                 <div className="flex flex-col gap-3 pr-2.5 mt-4 -mr-1.5 overflow-y-auto max-h-80">
-                  {data?.results.map((result) => (
-                    <SearchUserResultCard
-                      key={result.id}
-                      name={result.email}
-                      username={result.username}
-                      profile={result.profile_picture}
-                      friendStatus={result.relationship_status}
-                    />
+                  {data?.results.map((user) => (
+                    <SearchUserResultCard key={user.id} user={user} />
                   ))}
                 </div>
               </div>

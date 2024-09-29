@@ -15,7 +15,7 @@ export const routes = createBrowserRouter([
     element: <RootLayout />,
     children: [
       {
-        path: "chats",
+        path: "chats/:chatId",
         element: (
           <PrivateRoute>
             <Chats />

@@ -37,17 +37,32 @@ def login():
         print(err.messages)
         return jsonify({"error": err.messages}), 400
 
-    user = User.query.filter_by(email=data["email"]).first()
+    username_or_email = data.get("usernameOrEmail")
+    password = data.get("password")
 
-    if user and check_password_hash(user.password_hash, data["password"]):
+    if "@" in username_or_email:
+        user = User.query.filter_by(email=username_or_email).first()
+    else:
+        user = User.query.filter_by(name=username_or_email).first()
+
+    if not user:
+        return send_response(
+            message="User with that email or username not found",
+            success=False,
+            status_code=404,
+        )
+
+    if user and check_password_hash(user.password_hash, password):
         token_payload = {"user_id": user.id}
 
+        # Generate access and refresh tokens
         token_expiration_time = timedelta(minutes=30)
         token = create_access_token(token_payload, expires_delta=token_expiration_time)
         refresh_token = create_refresh_token(
             token_payload, expires_delta=timedelta(days=7)
         )
 
+        # Respond with the tokens and user info
         return send_response(
             data={
                 "token": token,
@@ -90,8 +105,9 @@ def signup():
         )
 
     user, message, status_code = create_user(
-        data["username"], data["email"], data["password"]
+        data["fullName"], data["username"], data["email"], data["password"]
     )
+
     return send_response(
         message=message, status_code=status_code, success=user is not None
     )

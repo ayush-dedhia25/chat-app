@@ -1,23 +1,46 @@
-function ChatListItem() {
+import { Link } from "react-router-dom";
+
+import { generateInitials } from "../../utils";
+
+function ChatListItem({ chat }) {
+  console.log("chat", chat);
+
   return (
-    <div className="text-zinc-400 flex gap-3 hover:bg-zinc-800 py-3 px-3 rounded-md cursor-pointer items-center">
-      <div className="w-11 overflow-hidden rounded-full aspect-square shrink-0">
-        <img
-          src="https://usatodayhss.com/wp-content/uploads/sites/96/2022/08/11268798.jpeg?w=1000&h=600&crop=1"
-          alt="Profile Image"
-          className="size-full object-cover"
-        />
-      </div>
-      <div className="flex-grow min-w-0">
-        <div className="flex justify-between items-center">
-          <h4 className="font-semibold text-zinc-200 text-sm">Ayush</h4>
-          <span className="text-xs">21:44</span>
+    <Link to={`/chats/${chat?.id}`}>
+      <div className="flex items-center gap-3 px-3 py-3 rounded-md cursor-pointer text-zinc-400 hover:bg-zinc-800">
+        <div className="grid overflow-hidden rounded-full w-11 aspect-square shrink-0 place-items-center bg-neutral-700">
+          {chat?.members.profile_picture ? (
+            <img
+              src={chat?.members.profile_picture}
+              alt={`${chat?.members.name} profile Image`}
+              className="object-cover size-full"
+            />
+          ) : (
+            <span className="text-sm font-semibold text-neutral-400">
+              {generateInitials(chat?.members.name)}
+            </span>
+          )}
         </div>
-        <p className="text-sm mt-1 truncate">
-          Lorem ipsum dolor sit amet consectetur adipisicing.
-        </p>
+        <div className="flex-grow min-w-0">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-zinc-200">{chat?.members?.name}</h4>
+            {chat?.last_message && (
+              <span className="text-xs">
+                {new Date(chat?.last_message?.sent_at).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-sm truncate">
+            {chat?.last_message
+              ? chat?.last_message?.content
+              : "Click to start up a conversation"}
+          </p>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

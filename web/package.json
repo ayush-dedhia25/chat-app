@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.1",
     "axios": "^1.7.7",
+    "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "clx": "^1.0.0",
     "lucide-react": "^0.439.0",
@@ -19,7 +21,10 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
     "react-router-dom": "^6.26.1",
+    "socket.io-client": "^4.8.0",
     "swr": "^2.2.5",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7",
     "tw-merge": "^0.0.1-alpha.3",
     "yup": "^1.4.0"
   },

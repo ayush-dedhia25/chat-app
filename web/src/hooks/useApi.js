@@ -2,18 +2,20 @@ import useSWR from "swr";
 
 import apiClient from "../api-client";
 
-const fetcher = (url) => apiClient(url).then((res) => res.data);
+const fetcher = (url) => apiClient.get(url).then((res) => res.data);
 
 /**
- * Performs a GET request to the given URL and returns the response data.
- * Also returns a mutate function that can be used to revalidate the data.
+ * Fetches data from the given URL using the `apiClient` and provides the results
+ * in a format similar to `react-query`'s `useQuery`.
  *
  * @param {string} url The URL to query.
- * @param {object} options Options to pass to useSWR.
- * @returns {object} An object with data, isLoading, isError, and mutate properties.
- *   isLoading is true if the data is currently being fetched, false otherwise.
- *   isError is true if there was an error fetching the data, false otherwise.
- *   mutate is a function that can be used to revalidate the data.
+ * @param {object} [options] Options to pass to `useSWR`.
+ * @returns {object} An object with the following properties:
+ *   - `result`: The data returned from the API.
+ *   - `isLoading`: A boolean indicating whether the data is still being loaded.
+ *   - `hasError`: A boolean indicating whether there was an error loading the data.
+ *   - `error`: The error that occurred if `hasError` is true.
+ *   - `refreshData`: A function to call to re-fetch the data from the API.
  */
 export function useQueryApi(url, options = {}) {
   const { data, error, mutate } = useSWR(url, fetcher, {
@@ -22,10 +24,11 @@ export function useQueryApi(url, options = {}) {
   });
 
   return {
-    data,
+    result: data,
     isLoading: !error && !data,
-    isError: error,
-    mutate,
+    hasError: !!error,
+    error,
+    refreshData: mutate,
   };
 }
 

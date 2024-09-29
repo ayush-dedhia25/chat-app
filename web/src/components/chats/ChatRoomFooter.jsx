@@ -1,7 +1,7 @@
 import { SendHorizontalIcon, SmilePlusIcon } from "lucide-react";
 import { useState } from "react";
 
-function ChatRoomFooter() {
+function ChatRoomFooter({ sendMessage }) {
   const [message, setMessage] = useState("");
 
   return (
@@ -16,7 +16,10 @@ function ChatRoomFooter() {
         onChange={(e) => setMessage(e.target.value)}
       />
       {message && (
-        <button className="px-2 py-2 rounded-md text-zinc-200 hover:bg-neutral-600">
+        <button
+          className="px-2 py-2 rounded-md text-zinc-200 hover:bg-neutral-600"
+          onClick={() => sendMessage(message)}
+        >
           <SendHorizontalIcon size={20} strokeWidth={1.5} />
         </button>
       )}

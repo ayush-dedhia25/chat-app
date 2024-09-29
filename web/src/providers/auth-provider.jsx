@@ -1,10 +1,9 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
+import { io } from "socket.io-client";
 
 import { REFRESH_TOKEN_KEY, TOKEN_KEY, USER_KEY } from "../constants";
 import { mutationApi } from "../hooks/useApi";
 import { decryptData, encryptData, generateAndStoreKey } from "../utils/encryption";
-
-export const AuthContext = createContext();
 
 /**
  * @typedef User
@@ -12,7 +11,19 @@ export const AuthContext = createContext();
  * @property {string} username - The user's username.
  * @property {string} email - The user's email.
  * @property {string} profile_picture - The user's profile picture.
+ *
+ * @typedef AuthContextValue
+ * @property {string} token - The auth token.
+ * @property {string} refreshToken - The refresh token.
+ * @property {User} user - The user object.
+ * @property {boolean} loading - Whether the auth data is being loaded.
+ * @property {() => void} logout - A function to logout.
+ * @property {(formData: any) => Promise<void>} login - A function to login.
+ * @property {() => Promise<void>} refreshAccessToken - A function to refresh the access token.
+ * @property {import("socket.io-client").Socket|null} socket - The socket instance.
  */
+
+export const AuthContext = createContext(/** @type {AuthContextValue} */ (null));
 
 /**
  * Stores the given auth data in local storage, encrypted with the given key.
@@ -64,20 +75,39 @@ const retrieveDecryptedData = async (key) => {
   }
 };
 
-/**
- * Provides the current user state and login/logout functions.
- *
- * This hook must be used within an AuthProvider. It will throw an error if used
- * outside of an AuthProvider.
- *
- * @returns {{ user: User | null, login: (formData: { email: string; password: string; }) => Promise<void>, logout: () => Promise<void> }}
- */
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
   const [key, setKey] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [socket, setSocket] = useState(null);
+
+  const initializeSocket = useCallback(() => {
+    if (token) {
+      const socket = io(import.meta.env.VITE_API_URL, {
+        auth: { token },
+        transports: ["websocket"],
+        forceNew: true,
+      });
+
+      socket.on("connect", () => {
+        console.log("🟢 Socket connected");
+      });
+
+      socket.on("disconnect", () => {
+        console.log("🔴 Socket disconnected");
+      });
+
+      setSocket(socket);
+
+      return () => {
+        socket.disconnect();
+        setSocket(null);
+        console.log("Socket connection closed on cleanup");
+      };
+    }
+  }, [token]);
 
   useEffect(() => {
     const init = async () => {
@@ -90,6 +120,8 @@ function AuthProvider({ children }) {
           setToken(storedData.token);
           setRefreshToken(storedData.refreshToken);
           setUser(storedData.user);
+
+          initializeSocket(storedData.token);
         }
 
         setLoading(false);
@@ -100,7 +132,7 @@ function AuthProvider({ children }) {
     };
 
     init();
-  }, []);
+  }, [initializeSocket]);
 
   useEffect(() => {
     if (key && token && refreshToken && user) {
@@ -118,6 +150,8 @@ function AuthProvider({ children }) {
         setUser(result.data.user);
         setToken(result.data.token);
         setRefreshToken(result.data.refreshToken);
+
+        initializeSocket(result.data.token);
 
         window.location.replace("/chats");
       }
@@ -141,6 +175,11 @@ function AuthProvider({ children }) {
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
 
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
+
     window.location.replace("/auth/login");
   };
 
@@ -154,6 +193,11 @@ function AuthProvider({ children }) {
           const encryptedToken = await encryptData(result.data.token, key);
           localStorage.setItem(TOKEN_KEY, JSON.stringify(encryptedToken));
         }
+
+        if (socket) {
+          socket.auth = { token: result.data.token };
+          socket.connect();
+        }
       } else {
         console.log("Failed to refresh token:", result);
         logout();
@@ -164,21 +208,19 @@ function AuthProvider({ children }) {
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        refreshToken,
-        login,
-        logout,
-        refreshAccessToken,
-        loading,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  /** @type {AuthContextValue} */
+  const values = {
+    user,
+    token,
+    refreshToken,
+    login,
+    logout,
+    refreshAccessToken,
+    loading,
+    socket,
+  };
+
+  return <AuthContext.Provider value={values}>{children}</AuthContext.Provider>;
 }
 
 export default AuthProvider;

@@ -1,9 +1,16 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, ValidationError, fields, validates_schema
 
 
 class LoginSchema(Schema):
-    email = fields.Email(required=True)
+    usernameOrEmail = fields.String(required=True)
     password = fields.String(required=True)
+
+    @validates_schema
+    def validate_login(self, data, **kwargs):
+        if not data.get("usernameOrEmail"):
+            raise ValidationError("Email or username must be provided")
+        if not data.get("password"):
+            raise ValidationError("Password must be provided.")
 
 
 class SignupSchema(Schema):

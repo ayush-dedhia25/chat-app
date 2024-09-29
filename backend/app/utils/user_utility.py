@@ -4,7 +4,7 @@ from ..extensions import db
 from ..models import Chat, ChatMember, ChatRequest, User
 
 
-def create_user(username: str, email: str, password: str):
+def create_user(fullName: str, username: str, email: str, password: str):
     """
     Create a new user in the database.
 
@@ -27,6 +27,7 @@ def create_user(username: str, email: str, password: str):
 
     hashed_password = generate_password_hash(password)
     new_user = User(
+        name=fullName,
         username=username,
         email=email,
         password_hash=hashed_password,

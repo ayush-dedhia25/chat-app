@@ -13,6 +13,7 @@ class ApiClient {
       },
     });
 
+    this.baseURL = baseUrl;
     this.isRefreshing = false;
     this.refreshSubscribers = [];
     this.setupInterceptors();
@@ -103,14 +104,14 @@ class ApiClient {
       );
 
       // Make the request to the server to get a new access token using the decrypted refresh token
-      const { data: response } = await axios.post("/auth/refresh", {
+      const { data: response } = await axios.post(`${this.baseURL}/auth/refresh`, {
         refreshToken,
       });
 
       // Store the new access token (you can encrypt it before storing if needed)
       const newToken = response.data.token;
       const encryptedToken = await encryptData(newToken, encryptionKey);
-      localStorage.setItem(REFRESH_TOKEN_KEY, JSON.stringify(encryptedToken));
+      localStorage.setItem(TOKEN_KEY, JSON.stringify(encryptedToken));
       return newToken;
     } catch (error) {
       console.error("Failed to refresh token:", error);

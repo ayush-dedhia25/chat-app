@@ -1,3 +1,5 @@
+import { TOKEN_KEY } from "../constants";
+
 export const encryptData = async (data, key) => {
   const encodedData = new TextEncoder().encode(JSON.stringify(data));
 
@@ -35,11 +37,10 @@ export const decryptData = async (encryptedData, key) => {
 };
 
 export const generateEncryptionKey = async () => {
-  return window.crypto.subtle.generateKey(
-    { name: "AES-GCM", length: 256 },
-    true,
-    ["encrypt", "decrypt"]
-  );
+  return window.crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, [
+    "encrypt",
+    "decrypt",
+  ]);
 };
 
 export const generateAndStoreKey = async () => {
@@ -50,12 +51,20 @@ export const generateAndStoreKey = async () => {
     return key;
   } else {
     const storedKey = JSON.parse(sessionStorage.getItem("encryptionKey"));
-    return window.crypto.subtle.importKey(
-      "jwk",
-      storedKey,
-      { name: "AES-GCM" },
-      true,
-      ["encrypt", "decrypt"]
-    );
+    return window.crypto.subtle.importKey("jwk", storedKey, { name: "AES-GCM" }, true, [
+      "encrypt",
+      "decrypt",
+    ]);
   }
+};
+
+export const retrieveDecryptedToken = async () => {
+  const key = await generateAndStoreKey(); // Retrieve the encryption key
+  const encryptedToken = JSON.parse(localStorage.getItem(TOKEN_KEY)); // Get the encrypted token from localStorage
+
+  if (encryptedToken) {
+    const decryptedToken = await decryptData(encryptedToken, key); // Decrypt the token
+    return decryptedToken;
+  }
+  return null;
 };

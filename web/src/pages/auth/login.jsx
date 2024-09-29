@@ -6,10 +6,7 @@ import * as Yup from "yup";
 import useAuth from "../../hooks/useAuth";
 
 const validationSchema = Yup.object().shape({
-  email: Yup.string()
-    .email("Invalid email format")
-    .required("Email is required"),
-
+  usernameOrEmail: Yup.string().required("Email or username is required"),
   password: Yup.string().required("Password is required"),
 });
 
@@ -39,35 +36,32 @@ function LoginPage() {
             Welcome Back to Textify! 👋🏻
           </h2>
           <p className="mt-3 text-sm text-center text-neutral-300">
-            Ready to connect? {"Let's"} make today unforgettable. Sign in to
-            chat with your friends and family, and stay in the loop!
+            Ready to connect? {"Let's"} make today unforgettable. Sign in to chat with
+            your friends and family, and stay in the loop!
           </p>
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit(handleLogin)}>
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm text-neutral-300">
-              Email
+            <label htmlFor="usernameOrEmail" className="block text-sm text-neutral-300">
+              Email or Username
             </label>
             <input
-              type="email"
-              id="email"
-              {...register("email")}
-              placeholder="Example@email.com"
+              type="text"
+              id="usernameOrEmail"
+              {...register("usernameOrEmail")}
+              placeholder="Login with username or email"
               className="w-full px-4 py-2 text-sm bg-transparent border rounded-md text-zinc-300 placeholder:text-zinc-400 focus:outline-1 border-neutral-400 focus:outline-offset-[3px] focus:ring-0"
             />
-            {errors.email && (
+            {errors.usernameOrEmail && (
               <small className="!mt-2 text-red-400 block">
-                {errors.email.message}
+                {errors.usernameOrEmail.message}
               </small>
             )}
           </div>
 
           <div className="space-y-2">
-            <label
-              htmlFor="password"
-              className="block text-sm text-neutral-300"
-            >
+            <label htmlFor="password" className="block text-sm text-neutral-300">
               Password
             </label>
             <input

@@ -1,18 +1,28 @@
 import { PhoneIcon, SearchIcon, VideoIcon } from "lucide-react";
 
-function ChatRoomHeader() {
+import { generateInitials } from "@/utils";
+
+function ChatRoomHeader({ friend }) {
+  console.log("friend", friend);
+
   return (
     <div className="flex items-center gap-3 pl-4 pr-2 py-2.5 bg-neutral-700">
       <div className="flex flex-grow gap-3">
-        <div className="w-10 overflow-hidden rounded-full">
-          <img
-            src="https://usatodayhss.com/wp-content/uploads/sites/96/2022/08/11268798.jpeg?w=1000&h=600&crop=1"
-            alt=""
-            className="object-cover size-full"
-          />
+        <div className="grid w-[38px] overflow-hidden rounded-full place-items-center bg-neutral-900">
+          {friend?.profile_picture ? (
+            <img
+              src={friend?.profile_picture}
+              alt={`${friend?.name} profile picture`}
+              className="object-cover size-full"
+            />
+          ) : (
+            <span className="text-sm font-semibold text-neutral-400">
+              {generateInitials(friend?.name)}
+            </span>
+          )}
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-zinc-200">Ayush Dedhia</h3>
+          <h3 className="text-sm font-semibold text-zinc-200">{friend?.name}</h3>
           <p className="text-xs text-neutral-300 mt-0.5 tracking-wide">
             last seen today at 21:19
           </p>
